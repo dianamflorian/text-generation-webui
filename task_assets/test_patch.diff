@@ -1,0 +1,414 @@
+diff --git a/repo/tests/conftest.py b/repo/tests/conftest.py
+new file mode 100644
+index 0000000..d72b8aa
+--- /dev/null
++++ b/repo/tests/conftest.py
+@@ -0,0 +1,23 @@
++"""Configure pytest: setup environment for html_generator tests."""
++import sys
++from pathlib import Path
++
++# Patch sys.argv so shared.py's parser.parse_args() doesn't fail when
++# pytest passes its own arguments (e.g. 'tests/ -v').
++# This runs at collection time, before any test module is imported.
++sys.argv = ['server.py']
++
++# Create CSS files required by html_generator module-level open() calls.
++# The files are opened relative to modules/html_generator.py's location.
++_css_dir = Path(__file__).parent.parent / 'css'  # repo/css/
++_css_dir.mkdir(exist_ok=True)
++
++for _css_file in ['html_readable_style.css', 'html_instruct_style.css']:
++    _p = _css_dir / _css_file
++    if not _p.exists():
++        _p.write_text('/* empty */')
++
++# Create a default chat style so generate_cai_chat_html tests can work
++_chat_style = _css_dir / 'chat_style-default.css'
++if not _chat_style.exists():
++    _chat_style.write_text('/* chat_style-default.css */')
+diff --git a/repo/tests/test_html_generator.py b/repo/tests/test_html_generator.py
+new file mode 100644
+index 0000000..9d64d9d
+--- /dev/null
++++ b/repo/tests/test_html_generator.py
+@@ -0,0 +1,202 @@
++"""End-to-end tests for modules.html_generator public interface."""
++import pytest
++
++# Import at module level - conftest.py creates CSS files before this is loaded.
++from modules.html_generator import (
++    image_cache,
++    convert_to_markdown,
++    convert_to_markdown_wrapped,
++    generate_basic_html,
++    generate_instruct_html,
++    generate_cai_chat_html,
++    chat_html_wrapper,
++)
++
++
++# ---------------------------------------------------------------------------
++# image_cache
++# ---------------------------------------------------------------------------
++
++def test_image_cache_is_dict():
++    assert isinstance(image_cache, dict)
++
++
++# ---------------------------------------------------------------------------
++# convert_to_markdown
++# ---------------------------------------------------------------------------
++
++def test_convert_to_markdown_empty_returns_empty():
++    assert convert_to_markdown('') == ''
++
++
++def test_convert_to_markdown_none_returns_empty():
++    assert convert_to_markdown(None) == ''
++
++
++def test_convert_to_markdown_returns_string():
++    result = convert_to_markdown('Hello world')
++    assert isinstance(result, str)
++
++
++def test_convert_to_markdown_contains_text():
++    result = convert_to_markdown('Hello world')
++    assert 'Hello world' in result
++
++
++def test_convert_to_markdown_with_message_id_returns_string():
++    result = convert_to_markdown('Some text', message_id='msg-1')
++    assert isinstance(result, str)
++
++
++def test_convert_to_markdown_markdown_bold():
++    """Bold markdown ** should produce HTML with the text present."""
++    result = convert_to_markdown('**bold text**')
++    assert 'bold text' in result
++
++
++# ---------------------------------------------------------------------------
++# convert_to_markdown_wrapped
++# ---------------------------------------------------------------------------
++
++def test_convert_to_markdown_wrapped_returns_string():
++    result = convert_to_markdown_wrapped('hello')
++    assert isinstance(result, str)
++
++
++def test_convert_to_markdown_wrapped_no_cache_returns_string():
++    result = convert_to_markdown_wrapped('hello', use_cache=False)
++    assert isinstance(result, str)
++
++
++def test_convert_to_markdown_wrapped_cache_matches_direct():
++    text = 'cache consistency test'
++    direct = convert_to_markdown(text)
++    wrapped = convert_to_markdown_wrapped(text, use_cache=True)
++    assert direct == wrapped
++
++
++def test_convert_to_markdown_wrapped_empty_returns_empty():
++    assert convert_to_markdown_wrapped('') == ''
++
++
++# ---------------------------------------------------------------------------
++# generate_basic_html
++# ---------------------------------------------------------------------------
++
++def test_generate_basic_html_returns_string():
++    result = generate_basic_html('Test content')
++    assert isinstance(result, str)
++
++
++def test_generate_basic_html_has_style_tag():
++    result = generate_basic_html('Test content')
++    assert '<style>' in result
++
++
++def test_generate_basic_html_has_readable_container():
++    result = generate_basic_html('Test content')
++    assert 'readable-container' in result
++
++
++def test_generate_basic_html_empty_input():
++    result = generate_basic_html('')
++    assert isinstance(result, str)
++
++
++# ---------------------------------------------------------------------------
++# generate_instruct_html
++# ---------------------------------------------------------------------------
++
++def test_generate_instruct_html_returns_string():
++    history = {'visible': [['hi', 'hello']], 'internal': [['hi', 'hello']]}
++    result = generate_instruct_html(history)
++    assert isinstance(result, str)
++
++
++def test_generate_instruct_html_empty_history():
++    history = {'visible': [], 'internal': []}
++    result = generate_instruct_html(history)
++    assert isinstance(result, str)
++
++
++def test_generate_instruct_html_last_message_only():
++    history = {
++        'visible': [['q1', 'a1'], ['q2', 'a2']],
++        'internal': [['q1', 'a1'], ['q2', 'a2']],
++    }
++    result = generate_instruct_html(history, last_message_only=True)
++    assert isinstance(result, str)
++
++
++def test_generate_instruct_html_contains_content():
++    history = {'visible': [['question', 'answer']], 'internal': [['question', 'answer']]}
++    result = generate_instruct_html(history)
++    assert 'answer' in result
++
++
++# ---------------------------------------------------------------------------
++# generate_cai_chat_html
++# ---------------------------------------------------------------------------
++
++def test_generate_cai_chat_html_returns_string(monkeypatch):
++    import modules.html_generator as hg
++    monkeypatch.setitem(hg.chat_styles, 'default', '/* empty */')
++    history = {'visible': [['hi', 'hello']], 'internal': [['hi', 'hello']]}
++    result = generate_cai_chat_html(history, 'User', 'Bot', 'default', 'Bot')
++    assert isinstance(result, str)
++
++
++def test_generate_cai_chat_html_empty_history(monkeypatch):
++    import modules.html_generator as hg
++    monkeypatch.setitem(hg.chat_styles, 'default', '/* empty */')
++    history = {'visible': [], 'internal': []}
++    result = generate_cai_chat_html(history, 'User', 'Bot', 'default', 'Bot')
++    assert isinstance(result, str)
++
++
++# ---------------------------------------------------------------------------
++# chat_html_wrapper
++# ---------------------------------------------------------------------------
++
++def test_chat_html_wrapper_returns_dict():
++    history = {'visible': [['hi', 'hello']], 'internal': [['hi', 'hello']]}
++    result = chat_html_wrapper(history, 'User', 'Bot', 'instruct', 'default', 'Bot')
++    assert isinstance(result, dict)
++
++
++def test_chat_html_wrapper_has_html_key():
++    history = {'visible': [['hi', 'hello']], 'internal': [['hi', 'hello']]}
++    result = chat_html_wrapper(history, 'User', 'Bot', 'instruct', 'default', 'Bot')
++    assert 'html' in result
++
++
++def test_chat_html_wrapper_html_is_string():
++    history = {'visible': [['hi', 'hello']], 'internal': [['hi', 'hello']]}
++    result = chat_html_wrapper(history, 'User', 'Bot', 'instruct', 'default', 'Bot')
++    assert isinstance(result['html'], str)
++
++
++def test_chat_html_wrapper_has_last_message_only_key():
++    history = {'visible': [['hi', 'hello']], 'internal': [['hi', 'hello']]}
++    result = chat_html_wrapper(history, 'User', 'Bot', 'instruct', 'default', 'Bot')
++    assert 'last_message_only' in result
++
++
++def test_chat_html_wrapper_empty_history():
++    history = {'visible': [], 'internal': []}
++    result = chat_html_wrapper(history, 'User', 'Bot', 'instruct', 'default', 'Bot')
++    assert isinstance(result, dict)
++    assert isinstance(result['html'], str)
++
++
++def test_chat_html_wrapper_last_message_only_false_by_default():
++    history = {'visible': [['q', 'a']], 'internal': [['q', 'a']]}
++    result = chat_html_wrapper(history, 'User', 'Bot', 'instruct', 'default', 'Bot')
++    assert result['last_message_only'] is False
++
++
++def test_chat_html_wrapper_last_message_only_true():
++    history = {'visible': [['q', 'a']], 'internal': [['q', 'a']]}
++    result = chat_html_wrapper(history, 'User', 'Bot', 'instruct', 'default', 'Bot',
++                               last_message_only=True)
++    assert result['last_message_only'] is True
+diff --git a/repo/tests/test_reasoning.py b/repo/tests/test_reasoning.py
+new file mode 100644
+index 0000000..4f1e0b6
+--- /dev/null
++++ b/repo/tests/test_reasoning.py
+@@ -0,0 +1,74 @@
++"""Tests for modules.reasoning public API."""
++import pytest
++from modules.reasoning import extract_reasoning, THINKING_FORMATS
++
++
++def test_thinking_formats_is_list():
++    assert isinstance(THINKING_FORMATS, list)
++
++
++def test_thinking_formats_nonempty():
++    assert len(THINKING_FORMATS) > 0
++
++
++def test_thinking_formats_entries_are_3tuples():
++    for entry in THINKING_FORMATS:
++        assert isinstance(entry, tuple)
++        assert len(entry) == 3
++
++
++def test_extract_reasoning_basic_think_tag():
++    thinking, content = extract_reasoning("<think>I am thinking</think>The answer is 42")
++    assert thinking == "I am thinking"
++    assert content == "The answer is 42"
++
++
++def test_extract_reasoning_no_thinking_block():
++    thinking, content = extract_reasoning("Just a plain response")
++    assert thinking is None
++    assert content == "Just a plain response"
++
++
++def test_extract_reasoning_empty_string():
++    thinking, content = extract_reasoning("")
++    assert thinking is None
++    assert content == ""
++
++
++def test_extract_reasoning_none_input():
++    thinking, content = extract_reasoning(None)
++    assert thinking is None
++    assert content is None
++
++
++def test_extract_reasoning_incomplete_think_tag_captures_rest():
++    thinking, content = extract_reasoning("<think>Still thinking...")
++    assert thinking == "Still thinking..."
++    assert content == ""
++
++
++def test_extract_reasoning_html_escaped_think_tag():
++    thinking, content = extract_reasoning(
++        "&lt;think&gt;thought&lt;/think&gt;answer", html_escaped=True
++    )
++    assert thinking == "thought"
++    assert content == "answer"
++
++
++def test_extract_reasoning_returns_tuple_of_two():
++    result = extract_reasoning("some text")
++    assert isinstance(result, tuple)
++    assert len(result) == 2
++
++
++def test_extract_reasoning_lstrips_content():
++    # extract_reasoning uses lstrip() on the remaining content
++    thinking, content = extract_reasoning("<think>thought</think>  answer")
++    assert thinking == "thought"
++    assert content == "answer"
++
++
++def test_extract_reasoning_empty_think_tag():
++    thinking, content = extract_reasoning("<think></think>after")
++    assert thinking == ""
++    assert content == "after"
+diff --git a/repo/tests/test_sane_markdown_lists.py b/repo/tests/test_sane_markdown_lists.py
+new file mode 100644
+index 0000000..5fd03c9
+--- /dev/null
++++ b/repo/tests/test_sane_markdown_lists.py
+@@ -0,0 +1,91 @@
++"""Tests for modules.sane_markdown_lists public API."""
++import markdown
++import pytest
++from markdown import Extension
++
++from modules.sane_markdown_lists import (
++    MIN_NESTED_LIST_INDENT,
++    SaneListExtension,
++    makeExtension,
++)
++
++
++def test_min_nested_list_indent_is_int():
++    assert isinstance(MIN_NESTED_LIST_INDENT, int)
++
++
++def test_min_nested_list_indent_greater_than_one():
++    assert MIN_NESTED_LIST_INDENT > 1
++
++
++def test_sane_list_extension_is_markdown_extension():
++    ext = SaneListExtension()
++    assert isinstance(ext, Extension)
++
++
++def test_make_extension_returns_sane_list_extension():
++    ext = makeExtension()
++    assert isinstance(ext, SaneListExtension)
++
++
++def test_make_extension_accepts_kwargs():
++    ext = makeExtension()
++    assert ext is not None
++
++
++def test_unordered_list_renders_ul():
++    result = markdown.markdown(
++        "- item 1\n- item 2\n- item 3", extensions=[SaneListExtension()]
++    )
++    assert "<ul>" in result
++    assert "<li>" in result
++
++
++def test_unordered_list_contains_items():
++    result = markdown.markdown(
++        "- item 1\n- item 2\n- item 3", extensions=[SaneListExtension()]
++    )
++    assert "item 1" in result
++    assert "item 2" in result
++    assert "item 3" in result
++
++
++def test_ordered_list_renders_ol():
++    result = markdown.markdown(
++        "1. first\n2. second\n3. third", extensions=[SaneListExtension()]
++    )
++    assert "<ol>" in result
++    assert "<li>" in result
++
++
++def test_ordered_list_contains_items():
++    result = markdown.markdown(
++        "1. first\n2. second\n3. third", extensions=[SaneListExtension()]
++    )
++    assert "first" in result
++    assert "second" in result
++    assert "third" in result
++
++
++def test_paragraph_renders_p_tag():
++    result = markdown.markdown(
++        "This is a paragraph.", extensions=[SaneListExtension()]
++    )
++    assert "<p>" in result
++    assert "This is a paragraph." in result
++
++
++def test_nested_unordered_list():
++    text = "- item 1\n  - nested\n- item 2"
++    result = markdown.markdown(text, extensions=[SaneListExtension()])
++    assert "item 1" in result
++    assert "nested" in result
++    assert "item 2" in result
++
++
++def test_fenced_code_via_make_extension():
++    ext = makeExtension()
++    result = markdown.markdown(
++        "- a\n- b", extensions=[ext]
++    )
++    assert "<ul>" in result
