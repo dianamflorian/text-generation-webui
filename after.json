@@ -1,0 +1,212 @@
+{
+  "tests": [
+    {
+      "name": "test_image_cache_is_dict",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_empty_returns_empty",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_none_returns_empty",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_returns_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_contains_text",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_with_message_id_returns_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_markdown_bold",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_wrapped_returns_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_wrapped_no_cache_returns_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_wrapped_cache_matches_direct",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_convert_to_markdown_wrapped_empty_returns_empty",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_basic_html_returns_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_basic_html_has_style_tag",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_basic_html_has_readable_container",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_basic_html_empty_input",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_instruct_html_returns_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_instruct_html_empty_history",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_instruct_html_last_message_only",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_instruct_html_contains_content",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_cai_chat_html_returns_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_generate_cai_chat_html_empty_history",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_chat_html_wrapper_returns_dict",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_chat_html_wrapper_has_html_key",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_chat_html_wrapper_html_is_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_chat_html_wrapper_has_last_message_only_key",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_chat_html_wrapper_empty_history",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_chat_html_wrapper_last_message_only_false_by_default",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_chat_html_wrapper_last_message_only_true",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_thinking_formats_is_list",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_thinking_formats_nonempty",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_thinking_formats_entries_are_3tuples",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_basic_think_tag",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_no_thinking_block",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_empty_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_none_input",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_incomplete_think_tag_captures_rest",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_html_escaped_think_tag",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_returns_tuple_of_two",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_lstrips_content",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_extract_reasoning_empty_think_tag",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_min_nested_list_indent_is_int",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_min_nested_list_indent_greater_than_one",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_sane_list_extension_is_markdown_extension",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_make_extension_returns_sane_list_extension",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_make_extension_accepts_kwargs",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_unordered_list_renders_ul",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_unordered_list_contains_items",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_ordered_list_renders_ol",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_ordered_list_contains_items",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_paragraph_renders_p_tag",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_nested_unordered_list",
+      "status": "PASSED"
+    },
+    {
+      "name": "test_fenced_code_via_make_extension",
+      "status": "PASSED"
+    }
+  ]
+}
