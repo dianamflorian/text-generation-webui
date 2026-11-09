@@ -50,7 +50,7 @@ This repository serves as a specialized testing environment for localized text a
 
 ## Added Value
 
-An expert-level repository structured to demonstrate how to safely validate model capabilities, benchmark code modifications, and handle runtime execution limits under air-gapped conditions.
+ An expert-level repository structured to demonstrate how to safely validate model capabilities, benchmark code modifications, and handle runtime execution limits under air-gapped conditions.
 
 ## Suggested Next Steps
 
